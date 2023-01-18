@@ -132,17 +132,30 @@ WHERE Account LIKE '%Expense' AND Region IS NOT NULL
 GROUP BY TransactionID, TransactionDate, Account, Region, Amount_$
 ORDER By PLN DESC
 
+-- Calculate 0.5% and 0.2% commissions from each transaction
 
+WITH CommissionCTE
+AS (
+SELECT Account, Amount_$, FORMAT (ROUND ((Amount_$ * 0.005), 2), 'c', 'us-US') AS '.05%'
+						, FORMAT (ROUND ((Amount_$ * 0.002), 2), 'c', 'us-US') AS '.02%'
+FROM [dbo].[MainData]
+)
+SELECT * 
+FROM CommissionCTE
+
+-- Create rolling total of amount by business unit, region and transaction date
+
+SELECT TransactionDate, BusinessUnit, Region, Amount_$
+	  , SUM (Amount_$) OVER (PARTITION BY BusinessUnit ORDER BY BusinessUnit, Region, TransactionDate) AS RunningTotal
+FROM [dbo].[MainData]
+WHERE Region IS NOT NULL
+ORDER BY 1,2,3
 
 
 
 
 select *
 from [dbo].[MainData]
- 
-
-
-
 
 
 select *
