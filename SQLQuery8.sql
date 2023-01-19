@@ -34,8 +34,7 @@ WHERE (CASE WHEN Ad.[Status] = 'Pending' AND Main.[Amount] >= 4000000 THEN 'Yes'
 
 SELECT Main.TransactionID, Amount
       , CASE WHEN CAST (Main.TransactionDate AS DateTime) BETWEEN '2019-01-01' AND '2019-12-31' THEN CASE WHEN Main.Region = 'EMEA' THEN 'Category A'
-											                  WHEN Main.Region = 'North America' THEN 'Category B'											E Main.Region = 'North America' THEN 'Category B'
-													  ELSE 'N/A' END 							 
+											                  WHEN Main.Region = 'North America' THEN 'Category B'																			   							 
              WHEN Main.Amount >= 7000000 THEN CASE WHEN Main.BusinessUnit = 'Software' THEN 'Category C'
 						   WHEN Main.BusinessUnit = 'Advertising' THEN 'Category D'
 						   ELSE 'N/A' END
