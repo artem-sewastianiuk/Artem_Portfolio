@@ -103,22 +103,6 @@ WHERE Number = 1
 ALTER TABLE [dbo].[MainData]
 DROP COLUMN TransactionDate_Converted
 
--- Create temp table 
-
-DROP TABLE IF EXISTS #CopyOfMainData
-CREATE TABLE #CopyOfMainData
-(
-TransactionID INT,
-TransactionDate DATE,
-Account NVARCHAR (100),
-BusinessUnit NVARCHAR (100),
-Region NVARCHAR (100),
-Amount DECIMAL
-)
-
-SELECT *
-FROM #CopyOfMainData
-
 -- Filter the data: Expense Accounts only, region is not blank, convert amount to PLN (1$ = 4.5 PLN)
 
 SELECT TransactionID, TransactionDate, Account, Region, FORMAT (Amount_$ * 4.5, 'c', 'pl-PL') PLN, MAX (FORMAT (Amount_$ * 4.5, 'c', 'pl-PL')) PLN2
@@ -144,6 +128,40 @@ SELECT TransactionDate, BusinessUnit, Region, Amount_$
       , SUM (Amount_$) OVER (PARTITION BY BusinessUnit ORDER BY BusinessUnit, Region, TransactionDate) AS RunningTotal
 FROM [dbo].[MainData]
 WHERE Region IS NOT NULL
+
+-- Create temp table with only transactions from EMEA region
+
+DROP TABLE IF EXISTS #CopyOfMainData
+CREATE TABLE #CopyOfMainData
+(
+TransactionID INT,
+TransactionDate DATE,
+Account NVARCHAR (100),
+BusinessUnit NVARCHAR (100),
+Region NVARCHAR (100),
+Amount DECIMAL
+)
+
+INSERT INTO #CopyOfMainData
+SELECT TransactionID, TransactionDate, Account, BusinessUnit, Region, Amount
+FROM [dbo].[MainData]
+WHERE Region = 'EMEA'
+
+-- Add new columns to the Main Data table
+
+ALTER TABLE [dbo].[MainData]
+ADD DailyInterest DECIMAL, Rate DECIMAL 
+
+UPDATE [dbo].[MainData]
+SET DailyInterest = (Amount_$ *0.005)/365
+  , Rate = ((Amount_$ *0.005)/365) * 0.3
+
+-- Run a report for a LATAM replacing South America with LATAM and including only the data from Americas
+
+SELECT TransactionID, Account, Amount,
+REPLACE (Region, 'South America', 'LATAM') Region
+FROM [dbo].[MainData]
+WHERE Region LIKE '%America'
 
 
 
