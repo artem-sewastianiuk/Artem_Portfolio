@@ -1,27 +1,28 @@
 USE PortfolioProject
 
 /* Permanently add leading zeros to select values in TransactionID column [dbo].[MainData] table to be able to join other tables using
-	TransactionID field */
+   TransactionID field */
 
-Update [dbo].[MainData]
-Set TransactionID = FORMAT (CAST (TransactionID AS NUMERIC), '000')
+UPDATE [dbo].[MainData]
+SET TransactionID = FORMAT (CAST (TransactionID AS NUMERIC), '000')
 
-Update [dbo].[MainData]
-Set TransactionDate = CONVERT(Date, TransactionDate)
+-- Convert TransactionDate column to Date type
+UPDATE [dbo].[MainData]
+SET TransactionDate = CONVERT(DATE, TransactionDate)
 
 /* Create a query which returns date of transaction, amount of transaction and the status. Check if there are any pending transactions
 	for the amount of more than 4M) */
 
 SELECT Main.[TransactionDate], Main.[Amount], Ad.[Status]
-	   , CASE WHEN Ad.[Status] = 'Pending' AND Main.[Amount] >= 4000000 THEN 'Yes'
-		 ELSE 'No'
-		 END AS 'Check'										
+       , CASE WHEN Ad.[Status] = 'Pending' AND Main.[Amount] >= 4000000 THEN 'Yes'
+	      ELSE 'No'
+         END AS 'Check'										
 FROM [dbo].[MainData] Main
 JOIN [dbo].[AdditionalData] Ad
 	ON Main.TransactionID = Ad.TRansactionID
 WHERE (CASE WHEN Ad.[Status] = 'Pending' AND Main.[Amount] >= 4000000 THEN 'Yes'
-		   ELSE 'No'
-		   END) = 'Yes'
+	    ELSE 'No'
+       END) = 'Yes'
 
 /* Sort transactions by below categories 
    Category A '2019 at EMEA'
@@ -32,22 +33,23 @@ WHERE (CASE WHEN Ad.[Status] = 'Pending' AND Main.[Amount] >= 4000000 THEN 'Yes'
 	*/
 
 SELECT Main.TransactionID, Amount
-	   , CASE WHEN CAST (Main.TransactionDate AS DateTime) BETWEEN '2019-01-01' AND '2019-12-31' THEN CASE WHEN Main.Region = 'EMEA' THEN 'Category A'
-																						WHEN Main.Region = 'North America' THEN 'Category B'
-																						ELSE 'N/A' END 
-			  WHEN Main.Amount >= 7000000 THEN CASE WHEN Main.BusinessUnit = 'Software' THEN 'Category C'
-													WHEN Main.BusinessUnit = 'Advertising' THEN 'Category D'
-													ELSE 'N/A' END
-			  WHEN Ad.Status = 'Requested' AND CAST (Main.TransactionDate AS DateTime) BETWEEN '2021-01-01' AND '2021-12-31' THEN 'Category E'
-			  ELSE 'N/A'
-		 END AS 'Category'										
+      , CASE WHEN CAST (Main.TransactionDate AS DateTime) BETWEEN '2019-01-01' AND '2019-12-31' THEN CASE WHEN Main.Region = 'EMEA' THEN 'Category A'
+											                  WHEN Main.Region = 'North America' THEN 'Category B'											E Main.Region = 'North America' THEN 'Category B'
+													  ELSE 'N/A' END 							 
+             WHEN Main.Amount >= 7000000 THEN CASE WHEN Main.BusinessUnit = 'Software' THEN 'Category C'
+						   WHEN Main.BusinessUnit = 'Advertising' THEN 'Category D'
+						   ELSE 'N/A' END
+             WHEN Ad.Status = 'Requested' AND CAST (Main.TransactionDate AS DateTime) BETWEEN '2021-01-01' AND '2021-12-31' THEN 'Category E'
+	     ELSE 'N/A'
+	 END AS 'Category'										
 FROM [dbo].[MainData] Main
 JOIN [dbo].[AdditionalData] Ad
 	ON Main.TransactionID = Ad.TransactionID
 GROUP BY Main.TransactionID, Amount
 	   , CASE WHEN CAST (Main.TransactionDate AS DateTime) BETWEEN '2019-01-01' AND '2019-12-31' THEN CASE WHEN Main.Region = 'EMEA' THEN 'Category A'
-																						                   WHEN Main.Region = 'North America' THEN 'Category B'
-																						                   ELSE 'N/A' END 
+												               WHEN Main.Region = 'North America' THEN 'Category B'											
+													       ELSE 'N/A' END 										                 
+																	                   ELSE 'N/A' END 
 			  WHEN Main.Amount >= 7000000 THEN CASE WHEN Main.BusinessUnit = 'Software' THEN 'Category C'
 													WHEN Main.BusinessUnit = 'Advertising' THEN 'Category D'
 													ELSE 'N/A' END
