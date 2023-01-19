@@ -47,14 +47,13 @@ JOIN [dbo].[AdditionalData] Ad
 GROUP BY Main.TransactionID, Amount
 	   , CASE WHEN CAST (Main.TransactionDate AS DateTime) BETWEEN '2019-01-01' AND '2019-12-31' THEN CASE WHEN Main.Region = 'EMEA' THEN 'Category A'
 												               WHEN Main.Region = 'North America' THEN 'Category B'											
-													       ELSE 'N/A' END 										                 
-																	                   ELSE 'N/A' END 
-			  WHEN Main.Amount >= 7000000 THEN CASE WHEN Main.BusinessUnit = 'Software' THEN 'Category C'
+													       ELSE 'N/A' END 										                 				
+	          WHEN Main.Amount >= 7000000 THEN CASE WHEN Main.BusinessUnit = 'Software' THEN 'Category C'
 													WHEN Main.BusinessUnit = 'Advertising' THEN 'Category D'
 													ELSE 'N/A' END
-			  WHEN Ad.Status = 'Requested' AND CAST (Main.TransactionDate AS DateTime) BETWEEN '2021-01-01' AND '2021-12-31' THEN 'Category E'
-			  ELSE 'N/A'
-		 END 
+	          WHEN Ad.Status = 'Requested' AND CAST (Main.TransactionDate AS DateTime) BETWEEN '2021-01-01' AND '2021-12-31' THEN 'Category E'
+		  ELSE 'N/A'
+	      END 
 ORDER BY 'Category'
 
 -- Add additional permanent column to display amount in decimal data type
@@ -64,11 +63,6 @@ ADD Amount_$ DECIMAL
 
 UPDATE [dbo].[MainData]
 SET Amount_$ = CONVERT (DECIMAL, Amount)
-
-UPDATE [dbo].[MainData]
-SET Region = CONVERT (NULL, Region)
-WHERE Region = ''
-
 
 -- Display the number of data that is not assigned to a Region and show it as 'N/A'
 
@@ -81,8 +75,8 @@ GROUP BY Region
 
 SELECT Account, Region
 , ISNULL (CASE WHEN TRIM (SUBSTRING (Account, 1, CHARINDEX (' ', Account))) = '' THEN Account
-	   ELSE TRIM (SUBSTRING (Account, 1, CHARINDEX (' ', Account)))
-  END
+	       ELSE TRIM (SUBSTRING (Account, 1, CHARINDEX (' ', Account)))
+          END
   + ' ' + Region, Account) AS 'Account Code'
 FROM [dbo].[MainData]
 
@@ -97,7 +91,7 @@ GROUP BY Account
 WITH RowNumberCTE AS 
 (
 SELECT *, ROW_NUMBER () OVER (
-		  PARTITION BY BusinessUnit, Account ORDER BY BusinessUnit, Account) Number			   
+	  PARTITION BY BusinessUnit, Account ORDER BY BusinessUnit, Account) Number			   
 FROM [dbo].[MainData]
 )
 SELECT BusinessUnit, Account
@@ -135,10 +129,10 @@ ORDER By PLN DESC
 
 -- Calculate 0.5% and 0.2% commissions from each transaction
 
-WITH CommissionCTE
-AS (
+WITH CommissionCTE AS
+(
 SELECT Account, Amount_$, FORMAT (ROUND ((Amount_$ * 0.005), 2), 'c', 'us-US') AS '.05%'
-						, FORMAT (ROUND ((Amount_$ * 0.002), 2), 'c', 'us-US') AS '.02%'
+			, FORMAT (ROUND ((Amount_$ * 0.002), 2), 'c', 'us-US') AS '.02%'
 FROM [dbo].[MainData]
 )
 SELECT * 
@@ -147,17 +141,10 @@ FROM CommissionCTE
 -- Create rolling total of amount by business unit, region and transaction date
 
 SELECT TransactionDate, BusinessUnit, Region, Amount_$
-	  , SUM (Amount_$) OVER (PARTITION BY BusinessUnit ORDER BY BusinessUnit, Region, TransactionDate) AS RunningTotal
+      , SUM (Amount_$) OVER (PARTITION BY BusinessUnit ORDER BY BusinessUnit, Region, TransactionDate) AS RunningTotal
 FROM [dbo].[MainData]
 WHERE Region IS NOT NULL
-ORDER BY 1,2,3
 
 
 
 
-select *
-from [dbo].[MainData]
-
-
-select *
-from [dbo].[AdditionalData]
